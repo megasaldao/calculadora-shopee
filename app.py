@@ -1,11 +1,12 @@
 from flask import Flask, request, render_template_string
 from decimal import Decimal, ROUND_HALF_UP, getcontext
+import os
 
 getcontext().prec = 28
 
 app = Flask(__name__)
 
-# ===== REGRAS SHOPEE (FECHADAS) =====
+# ===== REGRAS SHOPEE =====
 MARGEM = Decimal("0.15")
 IMPOSTO = Decimal("0.09")
 COMISSAO_PCT = Decimal("0.20")
@@ -16,7 +17,7 @@ DESCONTO_PROMO = Decimal("0.10")
 DESCONTO_CUPOM = Decimal("0.10")
 FATOR_DESCONTO = (Decimal("1") - DESCONTO_PROMO) * (Decimal("1") - DESCONTO_CUPOM)
 
-# ===== FUNÇÃO DE CÁLCULO =====
+# ===== CÁLCULO =====
 def calcular(custo):
     custo = Decimal(str(custo).replace(",", "."))
 
@@ -39,7 +40,7 @@ def calcular(custo):
 
     return preco_cadastro, preco_final, lucro
 
-# ===== TELA =====
+# ===== HTML =====
 HTML = """
 <!DOCTYPE html>
 <html>
@@ -85,5 +86,7 @@ def index():
         )
     return render_template_string(HTML, resultado=resultado)
 
+# ===== START CORRETO PARA RENDER =====
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

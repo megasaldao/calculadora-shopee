@@ -90,3 +90,26 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+from flask import jsonify, request
+
+@app.route("/api/calcular", methods=["GET"])
+def api_calcular():
+    try:
+        custo = request.args.get("custo")
+
+        if not custo:
+            return jsonify({"erro": "custo_nao_informado"}), 400
+
+        custo = Decimal(str(custo).replace(",", "."))
+
+        preco_cadastro, preco_final, lucro = calcular(custo)
+
+        return jsonify({
+            "preco_cadastro": float(preco_cadastro),
+            "preco_final": float(preco_final),
+            "lucro": float(lucro)
+        })
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500

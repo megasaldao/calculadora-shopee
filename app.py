@@ -53,7 +53,7 @@ def calcular(custo, imposto):
     return preco_cadastro, preco_final, lucro
 
 # =========================
-# HTML
+# HTML (SITE)
 # =========================
 HTML = """
 <!DOCTYPE html>
@@ -97,7 +97,7 @@ HTML = """
 """
 
 # =========================
-# ROTA
+# SITE
 # =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -117,6 +117,34 @@ def index():
         )
 
     return render_template_string(HTML, resultado=resultado)
+
+# =========================
+# API (EXCEL)
+# =========================
+@app.route("/api/calcular", methods=["GET"])
+def api_calcular():
+    try:
+        custo = request.args.get("custo")
+        loja = request.args.get("loja")
+
+        if not custo or not loja:
+            return {"erro": "Parâmetros inválidos"}, 400
+
+        if loja not in IMPOSTOS:
+            return {"erro": "Loja inválida"}, 400
+
+        imposto = IMPOSTOS[loja]
+
+        preco_cad, preco_final, lucro = calcular(custo, imposto)
+
+        return {
+            "preco_cadastro": float(preco_cad),
+            "preco_final": float(preco_final),
+            "lucro": float(lucro)
+        }
+
+    except Exception as e:
+        return {"erro": str(e)}, 500
 
 # =========================
 # START (RENDER)

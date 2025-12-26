@@ -6,9 +6,23 @@ getcontext().prec = 28
 
 app = Flask(__name__)
 
-# ===== REGRAS SHOPEE =====
+# =========================
+# LOJAS / IMPOSTOS
+# =========================
+IMPOSTOS = {
+    "mega": Decimal("0.09"),
+    "md2": Decimal("0.10"),
+    "showcase": Decimal("0.08")
+}
+
+# por enquanto fixa, igual está hoje
+LOJA_ATIVA = "mega"
+IMPOSTO = IMPOSTOS[LOJA_ATIVA]
+
+# =========================
+# REGRAS SHOPEE
+# =========================
 MARGEM = Decimal("0.15")
-IMPOSTO = Decimal("0.09")
 COMISSAO_PCT = Decimal("0.20")
 TETO_COMISSAO = Decimal("100.00")
 TAXA_FIXA = Decimal("4.00")
@@ -17,7 +31,9 @@ DESCONTO_PROMO = Decimal("0.10")
 DESCONTO_CUPOM = Decimal("0.10")
 FATOR_DESCONTO = (Decimal("1") - DESCONTO_PROMO) * (Decimal("1") - DESCONTO_CUPOM)
 
-# ===== CÁLCULO =====
+# =========================
+# CÁLCULO
+# =========================
 def calcular(custo):
     custo = Decimal(str(custo).replace(",", "."))
 
@@ -40,7 +56,9 @@ def calcular(custo):
 
     return preco_cadastro, preco_final, lucro
 
-# ===== HTML =====
+# =========================
+# HTML
+# =========================
 HTML = """
 <!DOCTYPE html>
 <html>
@@ -73,6 +91,9 @@ HTML = """
 </html>
 """
 
+# =========================
+# ROTA
+# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
     resultado = None
@@ -86,30 +107,9 @@ def index():
         )
     return render_template_string(HTML, resultado=resultado)
 
-# ===== START CORRETO PARA RENDER =====
+# =========================
+# START (RENDER)
+# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-from flask import jsonify, request
-
-@app.route("/api/calcular", methods=["GET"])
-def api_calcular():
-    try:
-        custo = request.args.get("custo")
-
-        if not custo:
-            return jsonify({"erro": "custo_nao_informado"}), 400
-
-        custo = Decimal(str(custo).replace(",", "."))
-
-        preco_cadastro, preco_final, lucro = calcular(custo)
-
-        return jsonify({
-            "preco_cadastro": float(preco_cadastro),
-            "preco_final": float(preco_final),
-            "lucro": float(lucro)
-        })
-
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500

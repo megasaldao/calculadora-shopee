@@ -15,10 +15,6 @@ IMPOSTOS = {
     "showcase": Decimal("0.08")
 }
 
-# por enquanto fixa, igual está hoje
-LOJA_ATIVA = "mega"
-IMPOSTO = IMPOSTOS[LOJA_ATIVA]
-
 # =========================
 # REGRAS SHOPEE
 # =========================
@@ -34,18 +30,18 @@ FATOR_DESCONTO = (Decimal("1") - DESCONTO_PROMO) * (Decimal("1") - DESCONTO_CUPO
 # =========================
 # CÁLCULO
 # =========================
-def calcular(custo):
+def calcular(custo, imposto):
     custo = Decimal(str(custo).replace(",", "."))
 
     preco_final_pct = (custo + TAXA_FIXA) / (
-        Decimal("1") - COMISSAO_PCT - IMPOSTO - MARGEM
+        Decimal("1") - COMISSAO_PCT - imposto - MARGEM
     )
 
     if (preco_final_pct * COMISSAO_PCT) <= TETO_COMISSAO:
         preco_final = preco_final_pct
     else:
         preco_final = (custo + TAXA_FIXA + TETO_COMISSAO) / (
-            Decimal("1") - IMPOSTO - MARGEM
+            Decimal("1") - imposto - MARGEM
         )
 
     preco_final = preco_final.quantize(Decimal("0.01"), ROUND_HALF_UP)
@@ -66,7 +62,7 @@ HTML = """
     <title>Calculadora Shopee</title>
     <style>
         body { font-family: Arial; margin: 40px; }
-        input, button { padding: 8px; font-size: 16px; }
+        input, select, button { padding: 8px; font-size: 16px; }
         .box { margin-top: 20px; }
     </style>
 </head>
@@ -76,6 +72,15 @@ HTML = """
     <form method="post">
         <label>Custo do produto:</label><br><br>
         <input name="custo" required>
+
+        <br><br>
+        <label>Loja:</label><br><br>
+        <select name="loja">
+            <option value="mega">Mega</option>
+            <option value="md2">MD2</option>
+            <option value="showcase">Showcase</option>
+        </select>
+
         <br><br>
         <button type="submit">Calcular</button>
     </form>
@@ -97,14 +102,20 @@ HTML = """
 @app.route("/", methods=["GET", "POST"])
 def index():
     resultado = None
+
     if request.method == "POST":
         custo = request.form["custo"]
-        preco_cad, preco_final, lucro = calcular(custo)
+        loja = request.form["loja"]
+
+        imposto = IMPOSTOS[loja]
+
+        preco_cad, preco_final, lucro = calcular(custo, imposto)
         resultado = (
             f"{preco_cad:.2f}".replace(".", ","),
             f"{preco_final:.2f}".replace(".", ","),
             f"{lucro:.2f}".replace(".", ",")
         )
+
     return render_template_string(HTML, resultado=resultado)
 
 # =========================
